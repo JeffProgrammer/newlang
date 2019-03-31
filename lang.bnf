@@ -1,10 +1,11 @@
-parse = statement_list;
+parse = statement_list
 statement_list = statement ';' statement_list | empty
-statement = vardecl | expression;
-expression = addition;
-addition = multiplication ('+' | '-') addition | multiplication;
-multiplication = parens ('*' | '/' | '%') multiplication | parens;
-parens = '(' expression ')' | literal;
-vardecl = ['const'] type variable '=' expression;
-type = int | float | string;
-literal = integer | float | variable; 
+statement = vardecl | return_expression
+return_expression = 'return' expression
+expression = addition
+addition = multiplication ('+' | '-') addition | multiplication
+multiplication = parens ('*' | '/' | '%') multiplication | parens
+parens = '(' expression ')' | literal
+vardecl = ['const'] type variable '=' expression
+type = int | float | string
+literal = integer | float | variable

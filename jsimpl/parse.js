@@ -58,11 +58,24 @@ class Parser {
     }
 
     statement() {
-        const { token } = this.tokens[this.currentToken];
+        const { token, lineNumber } = this.tokens[this.currentToken];
         if (token == Tokens.CONST || this.isType(token)) {
             return this.vardecl();
         }
 
+        if (token == Tokens.RETURN) {
+            return this.returnExpression();
+        }
+
+        throw new Error(`Not a valid statement on line ${lineNumber}.`);
+    }
+
+    returnExpression() {
+        const { token } = this.tokens[this.currentToken];
+        if (token !== Tokens.RETURN)
+            throw new Error("Not a return expression.");
+
+        ++this.currentToken;
         return this.expression();
     }
 

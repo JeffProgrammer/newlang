@@ -6,7 +6,7 @@ const { VMContext } = require('./vm');
 const contents = `
 int a = 2;
 const int b = 2;
-(a + b) * 3;
+return (a + b) * 3;
 `;
 
 console.log("Going to parse contents:", contents);
