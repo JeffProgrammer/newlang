@@ -2,7 +2,7 @@ const { Tokens } = require('./tokens');
 
 class VMContext {
     constructor() {
-        /** @type {Object.<string, val>} */
+        /** @type {Object.<string, any>} */
         this.variables = {};
 
         this.result = null;
@@ -113,6 +113,7 @@ class IFStmtNode extends ASTNode {
         }
     }
 }
+
 class IntNode extends ASTNode {
     constructor(int) {
         super();
@@ -147,26 +148,19 @@ class VarNode extends ASTNode {
     }
 }
 
-class VarDeclareNode extends ASTNode {
-    constructor(name, is_const, type, expr) {
+class VarAssignNode extends ASTNode {
+    constructor(name, expr) {
         super();
 
         /** @type {string} */
         this.name = name;
-
-        /** @type {boolean} */
-        this.is_const = is_const;
-
-        /** @type {number} */
-        this.type = type;
 
         /** @type {ASTNode} */
         this.expr = expr;
     }
 
     interpret(vm) {
-        const val = this.expr.interpret();
-        vm.variables[this.name] = val;
+        vm.variables[this.name] = this.expr.interpret();
     }
 };
 
@@ -177,8 +171,10 @@ module.exports = {
     ASTNode,
     StmtListNode,
     BinaryExprNode,
+    CompExprNode,
+    IFStmtNode,
     IntNode,
     FloatNode,
-    VarDeclareNode,
+    VarAssignNode,
     VarNode,
 };

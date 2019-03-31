@@ -1,11 +1,14 @@
 parse = statement_list
 statement_list = statement ';' statement_list | empty
-statement = vardecl | return_expression
+statement = vardecl | return_expression | if_stmt | variable_assign
+if_stmt = 'if' '(' expression ')' statement [';' else statement]
 return_expression = 'return' expression
-expression = addition
+expression = conditional_expression
+conditional_expression = addition ( '==' | '!=' ) conditional_expression | addition
 addition = multiplication ('+' | '-') addition | multiplication
 multiplication = parens ('*' | '/' | '%') multiplication | parens
 parens = '(' expression ')' | literal
 vardecl = ['const'] type variable '=' expression
+variable_assign = variable '=' expression
 type = int | float | string
 literal = integer | float | variable

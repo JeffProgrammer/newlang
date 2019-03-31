@@ -3,9 +3,11 @@ const Lexer = require('./lex');
 const Parser = require('./parse');
 const { VMContext } = require('./vm');
 
-const contents = `
-int a = 2;
+const contents = 
+`int a = 2;
 const int b = 2;
+if (a == 2)
+   a = 4;
 return (a + b) * 3;
 `;
 

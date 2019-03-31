@@ -2,9 +2,11 @@ const { Tokens } = require('./tokens');
 const {
     StmtListNode,
     BinaryExprNode,
+    CompExprNode,
+    IFStmtNode,
     IntNode,
     FloatNode,
-    VarDeclareNode,
+    VarAssignNode,
     VarNode,
 } = require('./vm');
 
@@ -20,6 +22,9 @@ class VarData {
 
 class Parser {
     constructor(tokenStream) {
+        /**
+         * @type {Array<{token: number, val: any, lineNumber: number}>}
+         */
         this.tokens = tokenStream;
 
         this.currentToken = 0;
@@ -58,7 +63,10 @@ class Parser {
     }
 
     statement() {
-        const { token, lineNumber } = this.tokens[this.currentToken];
+        const { token, val, lineNumber } = this.tokens[this.currentToken];
+
+        console.log("Evaluating statement beginning with:", val)
+
         if (token == Tokens.CONST || this.isType(token)) {
             return this.vardecl();
         }
@@ -67,7 +75,80 @@ class Parser {
             return this.returnExpression();
         }
 
+        if (token == Tokens.IF) {
+            return this.ifStmt();
+        }
+
+        if (token == Tokens.IDENTIFIER) {
+            if (this.currentToken + 1 < this.tokens.length && this.tokens[this.currentToken + 1].token === Tokens.ASSIGNMENT) {
+                // Variable assignment.
+                return this.varAssign();
+            }
+        }
+
         throw new Error(`Not a valid statement on line ${lineNumber}.`);
+    }
+
+    varAssign() {
+        const ident = this.tokens[this.currentToken++];
+        if (ident.token !== Tokens.IDENTIFIER) {
+            throw new Error("Variable must be named!");
+        }
+        const var_name = ident.val;
+
+        // TODO: += and friends.
+        const eqToken = this.tokens[this.currentToken++];
+        if (eqToken.token !== Tokens.ASSIGNMENT) {
+            throw new Error("Trying to assign variable but not using = to assign.");
+        }
+
+        // Ok. First. Make sure that we actually exist as a variable.
+        if (typeof this.variables[var_name] === 'undefined') {
+            throw new Error(`Trying to assign variable ${var_name} but is not declared yet on line ${ident.lineNumber}`);
+        }
+
+        // Now, insure that we didn't declare with Const. If so, we can't reassign!
+        if (this.variables[var_name].is_const) {
+            throw new Error(`Trying to reassign constant variable ${var_name} on line ${ident.lineNumber}`);
+        }
+
+        const expr = this.expression();
+        return new VarAssignNode(var_name, expr);
+    }
+
+    ifStmt() {
+        const iftoken = this.tokens[this.currentToken++];
+        if (iftoken.token !== Tokens.IF)
+            throw new Error("Called ifStmt but does not have if.");
+
+        const lparen = this.tokens[this.currentToken++];
+        if (lparen.token !== Tokens.LPAREN)
+            throw new Error("If statment missing (");
+
+        const condition_expr = this.expression();
+
+        const rparen = this.tokens[this.currentToken++];
+        if (rparen.token !== Tokens.RPAREN)
+            throw new Error("If statement missing closing )");
+
+        const if_expr = this.statement();
+        let else_expr = null;
+
+        const semi = this.tokens[this.currentToken];
+        if (semi.token !== Tokens.SEMICOLON) {
+            throw new Error("Missing semicolon at end of if statement.");
+        }
+        console.log("Semi:", semi);
+
+        if (this.currentToken + 1 < this.tokens.length) {
+            const next = this.tokens[this.currentToken + 1];
+            if (next.token === Tokens.ELSE) {
+                this.currentToken += 2; // ';' 'else'
+                else_expr = this.statement();
+            }
+        }
+        
+        return new IFStmtNode(condition_expr, if_expr, else_expr);
     }
 
     returnExpression() {
@@ -120,12 +201,24 @@ class Parser {
         // further compiler analysis.
         this.variables[the_var.val] = new VarData(is_const, type_token.token);
 
-        return new VarDeclareNode(the_var.val, is_const, type_token.token, expr);
+        return new VarAssignNode(the_var.val, expr);
     }
 
     expression() {
-        const expr = this.addition();
-        return expr;
+        return this.conditionalExpression();
+    }
+
+    conditionalExpression() {
+        const left = this.addition();
+
+        const { token } = this.tokens[this.currentToken];
+        if (token == Tokens.EQ || token === Tokens.NOTEQ) {
+            ++this.currentToken;
+            const right = this.conditionalExpression();
+            return new CompExprNode(left, token, right);
+        }
+
+        return left;
     }
 
     addition() {
