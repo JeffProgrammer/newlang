@@ -141,6 +141,21 @@ class Lexer {
                         });
                     }
                     break;
+                case "!":
+                    ++this.position;
+                    if (this.position< len && this.str[this.position] === '=') {
+                        ++this.position;
+                        this.result.push({
+                            token: Tokens.NOTEQ,
+                            val: "!=",
+                            lineNumber: this.lineNumber
+                        });
+                    } else {
+                        // For now, we don't support ! operation.
+                        // TODO: do!
+                        throw new Error("Right now only != is supported in lexing.");
+                    }
+                    break;
                 case ";":
                     ++this.position;
                     this.result.push({
