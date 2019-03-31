@@ -77,6 +77,42 @@ class BinaryExprNode extends ASTNode {
     }
 }
 
+class CompExprNode extends BinaryExprNode {
+    constructor(left, op, right) {
+        super(left, op, right);
+    }
+
+    interpret(vm) {
+        const left = this.left.interpret(vm);
+        const right = this.right.interpret(vm);
+
+        switch (this.op) {
+            case Tokens.EQ:
+                return left == right;
+            case Tokens.NOTEQ:
+                return left != right;
+        }
+    }
+}
+
+class IFStmtNode extends ASTNode {
+    constructor(cond, if_expr, else_expr) {
+        super();
+        this.condition = cond;
+        this.if_expr = if_expr;
+        this.else_expr = else_expr;
+    }
+
+    interpret(vm) {
+        if (this.condition.interpret(vm)) {
+            this.if_expr.interpret(vm);
+        } else {
+            if (this.else_expr !== null) {
+                this.else_expr.interpret(vm);
+            }
+        }
+    }
+}
 class IntNode extends ASTNode {
     constructor(int) {
         super();
